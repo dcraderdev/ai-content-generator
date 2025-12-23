@@ -14,7 +14,9 @@ export async function POST(request: NextRequest) {
       model = 'claude-sonnet-4-5-20250929' as ClaudeModel,
       systemPrompt,
       maxTokens = 4096,
-      temperature = 1.0
+      temperature = 1.0,
+      useWebSearch = true,  // Enabled by default
+      webSearchDomains = []
     } = body;
 
     if (!prompt) {
@@ -25,12 +27,15 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('[API /api/generate/text] Calling Anthropic service...');
+    console.log('[API /api/generate/text] Web search:', useWebSearch);
 
     const result = await generateText(prompt, {
       model: model as ClaudeModel,
       maxTokens,
       temperature,
-      systemPrompt
+      systemPrompt,
+      useWebSearch,
+      webSearchDomains
     });
 
     if (!result.success) {

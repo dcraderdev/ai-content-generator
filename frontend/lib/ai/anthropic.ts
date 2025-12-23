@@ -25,6 +25,8 @@ export interface GenerateTextOptions {
   maxTokens?: number;
   temperature?: number;
   systemPrompt?: string;
+  useWebSearch?: boolean;
+  webSearchDomains?: string[];
 }
 
 /**
@@ -38,12 +40,15 @@ export async function generateText(
     model = 'claude-sonnet-4-5-20250929',
     maxTokens = 4096,
     temperature = 1.0,
-    systemPrompt
+    systemPrompt,
+    useWebSearch = false,
+    webSearchDomains = []
   } = options;
 
   console.log('[Anthropic] generateText called');
   console.log('[Anthropic] Model:', model);
   console.log('[Anthropic] Prompt length:', prompt.length);
+  console.log('[Anthropic] Web search enabled:', useWebSearch);
 
   // Check for API key
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -63,11 +68,20 @@ export async function generateText(
     const startTime = Date.now();
     console.log('[Anthropic] Sending request...');
 
+    // Build tools array if web search is enabled
+    const tools = useWebSearch ? [{
+      type: 'web_search_20250305' as const,
+      name: 'web_search' as const,
+      max_uses: 3,
+      ...(webSearchDomains.length > 0 && { allowed_domains: webSearchDomains })
+    }] : undefined;
+
     const message = await client.messages.create({
       model,
       max_tokens: maxTokens,
       temperature,
       system: systemPrompt,
+      tools,
       messages: [
         {
           role: 'user',
